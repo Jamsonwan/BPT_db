@@ -94,6 +94,22 @@ extern BPTree CreatBPTree(BPTree T){
 	return T;
 }
 
+// 查找最后的键值对
+extern Map SearchLast(BPTree T){
+	Map ret;
+
+	BPTree temp = T;
+	while (temp->ptr[0] != NULL){
+		temp = temp->ptr[temp->keynum-1];
+	}
+
+	ret.offset = temp->value[temp->keynum-1];
+	ret.key = temp->key[temp->keynum-1];
+
+	return ret;
+}
+
+
 /* 生成结点初始化 */
 static BPTree MallocNewNode(){
 	int i;
@@ -403,8 +419,9 @@ static BPTree RecursiveInsert(BPTree T, KeyType key, Record value, int i, BPTree
 
 	j = 0;
 	while (j < T->keynum && key >= T->key[j]){
-		if (key == T->key[j])
+		if (key == T->key[j]){
 			return T;
+		}
 		j++;
 	}
 
@@ -581,7 +598,7 @@ extern void TravelData(BPTree T){
 	while (temp != NULL){
 		i = 0;
 		while (i < temp->keynum){
-			printf("<%d, %d>, ", temp->key[i], temp->value[i]);
+			printf("<%d, %ld>, ", temp->key[i], temp->value[i]);
 			i++;
 		}
 		temp = temp->next;

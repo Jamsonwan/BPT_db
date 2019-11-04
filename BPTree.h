@@ -19,7 +19,7 @@
 #define FILE_MODE (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)
 
 typedef int KeyType; // 关键字的数据类型
-typedef int Record; // 索引所对应的值
+typedef off_t Record; // 索引所对应的值
 
 typedef struct BPTNode{
 	int isLeaf;
@@ -36,6 +36,11 @@ typedef struct Result{
 	int tag;
 }Result;
 
+typedef struct Map{
+	KeyType key;
+	off_t offset;
+}Map;
+
 extern BPTree Initialize();
 
 extern BPTree Insert(BPTree T, KeyType K, Record V);
@@ -51,5 +56,7 @@ extern void Travel(BPTree T);
 extern int SaveIndex(BPTree T);
 
 extern BPTree CreatBPTree(BPTree T);
+
+extern Map SearchLast(BPTree T);
 
 #endif

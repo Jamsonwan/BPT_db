@@ -5,10 +5,10 @@ target=main
 CC=gcc
 
 $(target):$(obj)
-	$(CC) $^ -o $@
+	$(CC) $^ -lpthread -o $@
 
 %.o:%.c
-	$(CC) -c $< -o $@
+	$(CC) -lpthread -c $< -o $@
 
 .PHONY:clean
 clean:
