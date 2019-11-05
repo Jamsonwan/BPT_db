@@ -107,7 +107,6 @@ extern int InsertTable(Data record, int id, int fd){
 
 	strcpy(name, record.name);
 	name[NAME_LEN-1] = '\0';
-//	printf("%d\n%s\n%d\n%c",id, name, std_no, sex);
 
 	endPos = get_offset(id, fd, WRITE);
 	

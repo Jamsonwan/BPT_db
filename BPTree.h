@@ -59,4 +59,6 @@ extern BPTree CreatBPTree(BPTree T);
 
 extern Map SearchLast(BPTree T);
 
+extern void TravelData(BPTree T);
+
 #endif

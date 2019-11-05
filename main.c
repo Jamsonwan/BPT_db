@@ -178,12 +178,10 @@ void * HandleInsert(void *arg){
 	temp = ParseInsert(cmd, i, &newData);
 
 	if (temp == 1){
-		printf("success\n");
-		printf("age: %d, name: %s, std_no: %d, sex: %c\n", newData.age, newData.name, newData.std_no, newData.sex);
 		T = Insert(T, map.key, map.offset);
 		i = InsertTable(newData, map.offset, fd);
 		if (i == SUCCESS){
-			printf(" (1) row effect.\n");
+			printf(" (1) row effect.\n>>");
 			return (void *)1;
 		}
 	}
@@ -191,6 +189,116 @@ void * HandleInsert(void *arg){
 
 }
 
+int ParseSelect(char cmd[][MAX_STRING_LEN], int data_len, KeyType *key){
+	int i = 1, j=0, k = 0;
+	char temp[MAX_STRING_LEN];
+
+	if (data_len != 8 && data_len != 6){
+		printf("Syntax error!\n");
+		return 0;
+	}
+
+	if (cmd[i++][0] != '*'){
+		printf("Use select * from please! Other function will implement in future!\n");
+		return 0;
+	}
+	if (strncmp(cmd[i++], "from", 4) != 0){
+		printf("Use from please!\n");
+		return 0;
+	}
+	if (strncmp(cmd[i++], TABLE_NAME, 7) != 0){
+		printf("Use %s please! Other function will implement in future!\n", TABLE_NAME);
+		return 0;
+	}
+	if (strncmp(cmd[i++], "where", 5) != 0){
+		printf("Use where please!\n");
+		return 0;
+	}
+	if (data_len == 6){
+		temp[0] = cmd[i][0];
+		temp[1] = cmd[i][1];
+		temp[2] = cmd[i][2];
+		j = 3;
+		k = 0;
+		if (strncmp(temp, "id=", 3) != 0){
+			printf("Use id= please! Other function will implement in future!\n");
+			return 0;
+		};
+
+		while (cmd[i][j] != ';' && cmd[i][j] != '\0'){
+			temp[k++] = cmd[i][j++];
+		}
+		temp[k] = '\0';
+		*key = atoi(temp);
+
+		if (cmd[i][j] != ';'){
+			printf("Syntax error! Loss ';'\n");
+			return 0;
+		}
+		
+	}else{
+		temp[0] = cmd[i][0];
+		temp[1] = cmd[i][1];
+		if (strncmp(temp, "id", 2) != 0){
+			printf("Use id = please! Other function will implement in future!\n");
+			return 0;
+		}
+		i++;
+		if (cmd[i][0] != '='){
+			printf("Use '=' please!\n");
+			return 0;
+		}
+		i++;
+		k=0;
+		j = 0;
+		while (cmd[i][k] != ';' && cmd[i][k] != '\0'){
+			temp[j++] = cmd[i][k++];
+		}
+		temp[j] = '\0';
+		*key = atoi(temp);
+
+		if (cmd[i][j] != ';'){
+			printf("Syntax error! Loss ';'!\n");
+			return 0;
+		}
+	}
+
+	return 1;
+}
+
+
+
+// 执行查询操作， 暂时只实现只能查询一条语句
+void * HandleSelect(void *arg){
+	Map map;
+	int i = 0, temp = 0;
+	KeyType key;
+
+	Result *p;
+
+	Data data;
+
+	char cmd[MAX_STRING_LEN][MAX_STRING_LEN];
+
+	i = ParseInput(str, cmd);
+	temp = ParseSelect(cmd, i, &key);
+
+	if (temp == 1){
+		p = SearchBPTree(T, key);
+		if (p->tag == 0){
+			printf(" No Such id!\n");
+			return (void *)0;
+		}
+		map.offset = p->pt->value[p->i];
+		data = Select(map.offset, fd);
+		printf("name	std_no		age	sex\n");
+		printf("%s	%d	%d	%c\n", data.name, data.std_no, data.age, data.sex);
+		printf(">>");
+		return (void *)1;
+	}
+	
+	return (void *)0;
+}
 
 int main(int argc, const char* argv[]){
 	int i, temp, cmd;
@@ -210,19 +318,27 @@ int main(int argc, const char* argv[]){
 			return 0;
 		}
 		map = SearchLast(T);
+		TravelData(T);
+		printf("\n");
 	}
 	
-	if ((fd = open(TABLE_NAME, OPEN_MODE, FILE_MODE)) == -1){
-		printf("Create or Open data file error!\n");
-		return 0;
+	if (access(TABLE_NAME, F_OK) == 0){
+		if ((fd = open(TABLE_NAME, O_RDWR)) == -1){
+			printf("Open data file error!\n");
+			return 0;
+		}
+	}else{
+		if ((fd = open(TABLE_NAME, OPEN_MODE, FILE_MODE)) == -1){
+			printf("Create data file error!\n");
+			return 0;
+		}
 	}
 
-	printf("%d  %ld\n", map.key, map.offset);
 
         PrintMenu(); 
+	printf(">>");
 	while(1){
 		cmd = -1;
-		printf(">>");
 		fgets(str, MAX_STRING_LEN, stdin);
 
 		cmd = GetCommand(str);
@@ -234,6 +350,12 @@ int main(int argc, const char* argv[]){
 				map.offset++;
 
 				if (pthread_create(&thread_id[thread_no++], NULL, HandleInsert, &map) != 0){
+					printf("create thread error!\n");
+					return 0;
+				}
+				break;
+			case SELECT:
+				if (pthread_create(&thread_id[thread_no++], NULL, HandleSelect, NULL) != 0){
 					printf("create thread error!\n");
 					return 0;
 				}

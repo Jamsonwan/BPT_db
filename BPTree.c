@@ -8,8 +8,8 @@ extern int SaveIndex(BPTree T){
 	int i = 0, j = 0;
 	KeyType key;
 	Record record;
-	char *p;
-        char *q;
+	KeyType *p;
+        off_t *q;
 
 	BPTree temp = T;
 
@@ -27,8 +27,8 @@ extern int SaveIndex(BPTree T){
 		while (i < temp->keynum){
 			key = temp->key[i];
 			record = temp->value[i];
-			p =(char *)&key;
-			q =(char *)&record;
+			p =&key;
+			q =&record;
 			if (pwrite(fd, p, 4, j) == -1){
 				close(fd);
 				return ERROR;
@@ -78,16 +78,16 @@ extern BPTree CreatBPTree(BPTree T){
 	}
 	
 	while (i < file_len){
-		if ((ret = pread(fd, q, sizeof(KeyType), i)) == -1){
+		if ((ret = pread(fd, q, 4, i)) == -1){
 			close(fd);
 			return NULL;
 		}
-		if ((ret = pread(fd, p, sizeof(Record), i+4)) == -1){
+		if ((ret = pread(fd, p, 4, i+4)) == -1){
 			close(fd);
 			return NULL;
 		}
 		T = Insert(T, *q, *p);
-		i = i + sizeof(KeyType) + sizeof(Record);
+		i = i + 8;
 	}
 	close(fd);
 
@@ -629,6 +629,7 @@ extern Result* SearchBPTree(BPTree T, KeyType key){
 		}
 		if(0 != i && temp->ptr[0] != NULL) i--;
 		if (found){
+			printf("Found!\n");
 			res->pt = temp;
 			res->i = i;
 			res->tag = True;
