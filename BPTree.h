@@ -61,4 +61,6 @@ extern Map SearchLast(BPTree T);
 
 extern void TravelData(BPTree T);
 
+extern unsigned long get_file_size(const char *filename);
+
 #endif

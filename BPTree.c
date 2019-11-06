@@ -49,7 +49,7 @@ extern int SaveIndex(BPTree T){
 }
 
 //得到文件的长度
-static unsigned long get_file_size(const char *filename){
+extern unsigned long get_file_size(const char *filename){
 	struct stat buf;
 	if (stat(filename, &buf) < 0)
 		return 0;
@@ -629,7 +629,6 @@ extern Result* SearchBPTree(BPTree T, KeyType key){
 		}
 		if(0 != i && temp->ptr[0] != NULL) i--;
 		if (found){
-			printf("Found!\n");
 			res->pt = temp;
 			res->i = i;
 			res->tag = True;

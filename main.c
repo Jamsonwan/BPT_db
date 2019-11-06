@@ -1,10 +1,12 @@
 #define TABLE_NAME  ("student")
 #define INDEX_NAME ("index")
+#define DELETE_INDEX ("delete_index")
 
 #define FILE_MODE (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)
 #define OPEN_MODE (O_RDWR | O_CREAT | O_TRUNC)
 #define MAX_STRING_LEN (100)
 #define MAX_THREAD_LEN (100)
+#define MAX_INDEX (100000)
 
 #define INSERT (1)
 #define DELETE (2)
@@ -30,6 +32,8 @@
 int fd;
 char str[MAX_STRING_LEN];
 BPTree T = NULL;
+//Map deleteIndex[MAX_INDEX];
+
 // 操作提醒
 void PrintMenu(){
 	printf("			----- B+ Tree Database -----		\n");
@@ -179,16 +183,24 @@ void * HandleInsert(void *arg){
 
 	if (temp == 1){
 		T = Insert(T, map.key, map.offset);
+		i = SaveIndex(T);
+		if (i == 0){
+			printf("Save Index Error.\n>>");
+			return (void *)0;
+		}
+		i = 0;
 		i = InsertTable(newData, map.offset, fd);
 		if (i == SUCCESS){
 			printf(" (1) row effect.\n>>");
 			return (void *)1;
 		}
 	}
+	printf(">>");
 	return (void *)0;
 
 }
 
+// 解析iselect
 int ParseSelect(char cmd[][MAX_STRING_LEN], int data_len, KeyType *key){
 	int i = 1, j=0, k = 0;
 	char temp[MAX_STRING_LEN];
@@ -286,7 +298,7 @@ void * HandleSelect(void *arg){
 	if (temp == 1){
 		p = SearchBPTree(T, key);
 		if (p->tag == 0){
-			printf(" No Such id!\n");
+			printf(" No Such id!\n>>");
 			return (void *)0;
 		}
 		map.offset = p->pt->value[p->i];
@@ -296,21 +308,329 @@ void * HandleSelect(void *arg){
 		printf(">>");
 		return (void *)1;
 	}
-	
+	printf(">>");	
+	return (void *)0;
+}
+
+// 判断一个字符串是否包含一个字符ch
+int contain_char(char *p, char ch){
+	while (*p != '\0'){
+		if (*p == ch){
+			return 1;
+		}
+		p++;
+	}
+	return 0;
+}	
+
+// 解析Update
+int ParseUpdate(char cmd[][MAX_STRING_LEN], int data_len, Data *p, int *id){
+	int i = 1, j = 0, k = 0;
+	int age = -1, std_no = -1;
+	char sex = 'a';
+	char name[MAX_STRING_LEN];
+	int flag = 0;
+	char temp[MAX_STRING_LEN];
+
+	name[0] = '\0';
+
+	if (data_len < 6 || data_len > 11){
+		printf("Syntax error!\n");
+		return 0;
+	}
+	if (strncmp(cmd[i++], TABLE_NAME, strlen(TABLE_NAME)) != 0){
+		printf("Syntax error!\n");
+		return 0;
+	}
+	if (strncmp(cmd[i++], "set", 3) != 0){
+		printf("Syntax error!\n");
+		return 0;
+	}
+	while (i < data_len){
+		flag = contain_char(cmd[i], '=');
+		if (!flag) break;
+
+		j = 0;
+		k = 0;
+		while (cmd[i][k] != '='){
+			temp[j++] = cmd[i][k++];
+		}
+		temp[j] = '\0';
+		k++; // skip '='
+
+		if (strncmp(temp, "age", 3) == 0)  flag = 1;
+		if (strncmp(temp, "name", 4) == 0)  flag = 2;
+		if (strncmp(temp, "sex", 3) == 0)  flag = 3;
+		if (strncmp(temp, "std_no", 6) == 0) flag = 4;
+	       
+	       	j = 0;
+		switch (flag){
+			case 1:
+				while (cmd[i][k] != ',' && cmd[i][k] != '\0'){
+					temp[j++] = cmd[i][k++];
+				}
+				temp[j] = '\0';
+				age = atoi(temp);
+				break;
+			case 2:
+				k++; // skip '"'
+				while (cmd[i][k] != '"'){
+					temp[j++] = cmd[i][k++];
+				}
+				temp[j] = '\0';
+				strncpy(name, temp, j);
+				break;
+			case 4:
+				while (cmd[i][k] != ',' && cmd[i][k] != '\0'){
+					temp[j++] = cmd[i][k++];
+				}
+				temp[j] = '\0';
+				std_no = atoi(temp);
+				break;
+			case 3:
+				k++; //skip '\'
+				sex = cmd[i][k];
+				break;
+		}
+		flag = 0;
+		i++;
+	}
+
+	if (strncmp(cmd[i++], "where", 5) != 0){
+		printf("Syntax error! Loss 'where'!\n");
+		return 0;
+	}
+
+	if (contain_char(cmd[i], '=')){
+		if (cmd[i][0] != 'i' && cmd[i][1] != 'd'){
+			printf("Use 'id=' please! Other function will implement in future!\n");
+			return 0;
+		}
+		k = 3; // skip '='
+		j = 0;
+		while (cmd[i][k] != ';' && cmd[i][k] != '\0'){
+			temp[j++] = cmd[i][k++];
+		}
+		temp[j] = '\0';
+	//	printf("id: %s\n",temp);
+		*id = atoi(temp);
+
+		if (cmd[i][k] != ';'){
+			printf("Syntax error! Loss ';'\n");
+			return 0;
+		}
+	}else{
+	       	if(strncmp(cmd[i++], "id", 2) != 0){
+			printf("Use 'id' please! Other function will implement in future!\n");
+			return 0;
+		}
+
+		if (cmd[i][0] != '='){
+			printf("Syntax error!\n");
+		 	return 0;
+		}
+		i++;
+		j = 0;
+		k = 0;
+		while (cmd[i][k] != ';' && cmd[i][k] != '\0'){
+			temp[j++] = cmd[i][k++];
+		}
+		temp[j] = '\0';
+		*id = atoi(temp);
+
+		if (cmd[i][k] != ';'){
+			printf("Syntax error! Loss ';'\n");
+			return 0;
+		}	        
+	}
+	p->age = age;
+	strcpy(p->name, name);
+	p->std_no = std_no;
+	p->sex = sex;
+
+	return 1;
+
+}
+
+// 进行更新
+void * HandleUpdate(void *arg){
+	Data newData;
+	KeyType key;
+	Result *p;
+
+	char cmd[MAX_STRING_LEN][MAX_STRING_LEN];
+	int i = 0, temp = 0;
+
+	i = ParseInput(str, cmd);
+	temp = ParseUpdate(cmd, i, &newData, &key);
+	if (temp == 1){
+		p = SearchBPTree(T, key);
+		if (p->tag == 0){
+			printf("No such id\n>>");
+			return (void *)0;
+		}
+		
+		i = Update(p->pt->value[p->i], fd, newData);
+		if (i == SUCCESS){
+			printf(" (1) row effect.\n>>");
+			return (void *)1;
+		}
+	}
+	printf(">>");
+	return (void *)0;
+}
+int ParseDelete(char cmd[][MAX_STRING_LEN], int data_len, KeyType *key){
+	int i, j, k;
+	char temp[MAX_STRING_LEN];
+
+	if (data_len < 6){
+		printf("Syntax error!\n");
+		return 0;
+	}
+	i = 1;
+
+	if (cmd[i++][0] != '*'){
+		printf("Use 'delete *' please! Other function will implement in future|\n");
+		return 0;
+	}
+	if (strncmp(cmd[i++], "from", 4) != 0){
+		printf("Syntax error! Loss 'from';\n");
+		return 0;
+	}
+	if (strncmp(cmd[i++], TABLE_NAME, 7) != 0){
+		printf("Use %s please! Other function will implement in future!\n", TABLE_NAME);
+		return 0;
+	}
+	if (strncmp(cmd[i++], "where", 5) != 0){
+		printf("Syntax error! Loss 'where';\n");
+		return 0;
+	}
+	if (contain_char(cmd[i], '=')){
+		if (cmd[i][0] != 'i' && cmd[i][1] != 'd'){
+			printf("Use 'where id= ' please, other function will implement in future.\n");
+			return 0;
+		}
+		k = 3; // skip '='
+		j = 0;
+		while (cmd[i][k] != ';' && cmd[i][k] != '\0'){
+			temp[j++] = cmd[i][k++];
+		}
+		temp[j] = '\0';
+		*key = atoi(temp);
+		if (cmd[i][k] != ';'){
+			printf("Syntax error, loss ';'.\n");
+			return 0;
+		}
+	}else{
+		if (strncmp(cmd[i++], "id", 2) != 0){
+			printf("Use 'id = ' please! Other function will implement in future.\n");
+			return 0;
+		}
+		if (cmd[i++][0] != '='){
+			printf("Syntax error! Loss '='.;\n");
+			return 0;
+		}
+		k = 0;
+		j = 0;
+		while (cmd[i][k] != ';' && cmd[i][k] != '\0'){
+			temp[j++] = cmd[i][k++];
+		}
+		temp[j] = '\0';
+		*key = atoi(temp);
+		if (cmd[i][k] != ';'){
+			printf("Syntax error! Loss ';'.\n");
+			return 0;
+		}
+	}
+	return 1;
+}
+
+
+// 处理删除
+void * HandleDelete(void *arg){
+	int data_len, temp;
+	KeyType key;
+	Result *p, *q;
+//	Map map;
+	char cmd[MAX_STRING_LEN][MAX_STRING_LEN];
+
+	data_len = ParseInput(str, cmd);
+	temp = ParseDelete(cmd, data_len, &key);
+	if (temp == 1){
+		p = SearchBPTree(T, key);
+		printf("search\n");
+		if (p->tag == 0){
+			printf("No Such id!\n>>");
+			return (void *) 0;
+		}
+		printf("remove\n");
+	//	map.key = key;
+	//	map.offset = p->pt->value[p->i];
+		
+		T = Remove(T, key);
+		printf("OK\n");
+		q = SearchBPTree(T, key);
+		if (q->tag == 0){
+//			delete_index[index] = map;
+	//		SaveDeleteIndex(index,map);
+	                printf("save");
+			SaveIndex(T);
+			printf(" <1> row effect.>>\n");
+			return (void *)1;
+		}
+		printf("System Error!\n");
+	}
+
+	printf(">>");
 	return (void *)0;
 }
 
 int main(int argc, const char* argv[]){
 	int i, temp, cmd;
+	int delete_fd;
 	int exit_flag = 0;
 	pthread_t thread_id[MAX_THREAD_LEN];
 	int thread_no = 0;
+//	int index_no = 0;
+//	unsigned long delete_len;
 	Map map;
+//	KeyType  *p;
+//	Record *q;
 
 	T = Initialize();
 	map.key = 0;
-	map.offset = 0;
+	map.offset = -1;
+/*
+	p = &delete_index[index_no].key;
+	q = &delete_index[index_no].offset;
 
+	if (access(DELETE_INDEX, F_OK) == 0){
+                delete_len = get_file_size(DELETE_INDEX);
+
+		i = 0;
+		if ((delete_fd = open(DELETE_INDEX, O_RDWR)) == -1){
+		       printf("Open delete_index failed!\n");
+	       	       return 0;
+		}
+		while (i < delete_len){
+			if ((pread(delete_fd, p, 4, i)) == -1){
+				close(delete_fd);
+				return 0;
+			}
+			if ((pread(delete_fd, q, 4, i+4)) == -1){
+				close(delete_fd);
+				return 0;
+			}
+			i += 8;
+			index_no++;
+
+			p = &delete_index[index_no].key;
+			q = &delete_index[index_no].offset;
+		}
+		close(delete_fd);
+
+	}
+	*/
 	if (access(INDEX_NAME, F_OK) == 0){
 		T = CreatBPTree(T);
 		if (T == NULL){
@@ -360,6 +680,18 @@ int main(int argc, const char* argv[]){
 					return 0;
 				}
 				break;
+			case DELETE:
+				if (pthread_create(&thread_id[thread_no++], NULL, HandleDelete, NULL) != 0){
+					printf("create thread error!\n");
+					return 0;
+				}
+				break;
+			case UPDATE:
+				if (pthread_create(&thread_id[thread_no++], NULL, HandleUpdate, NULL) != 0){
+					printf("create thread error!\n");
+					return 0;
+				}
+				break;
 
 			case EXIT:
 				exit_flag = 1;
@@ -369,25 +701,25 @@ int main(int argc, const char* argv[]){
 				PrintMenu();
 				break;
 			case DEFAULT:
-				printf("Syntax error\n");
+				printf("Syntax error\n>>");
 				break;
 			default:
-				printf("I will imeplement this function in future.\n");
+				printf("I will imeplement this function in future.\n>>");
 				break;
 		}
 		
+		i = 0;
+		for (;i < thread_no; i++){
+			pthread_join(thread_id[i], NULL);
+		}
+		thread_no = 0;
 		if(exit_flag)  break;
-	}
-	i = 0;
-	for (;i < thread_no; i++){
-		pthread_join(thread_id[i], NULL);
 	}
 
 	temp = SaveIndex(T);
-	if (temp == SUCCESS){
-		printf("Save successed!\n");
-	}else
-		printf("Save error\n");
+	if (temp == ERROR){
+		printf("Save index error!\n");
+	}
 
 	close(fd);
 

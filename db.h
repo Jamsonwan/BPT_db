@@ -19,7 +19,7 @@ typedef struct Table{
 
 extern int InsertTable(Data record, int id, int fd);
 
-extern int Delete(Data record, int fd);
+//extern int Delete(Data record, int fd);
 
 extern int Update(int id, int fd, Data newData);
 
