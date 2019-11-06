@@ -479,6 +479,8 @@ void * HandleUpdate(void *arg){
 	printf(">>");
 	return (void *)0;
 }
+
+// 解析删除
 int ParseDelete(char cmd[][MAX_STRING_LEN], int data_len, KeyType *key){
 	int i, j, k;
 	char temp[MAX_STRING_LEN];
@@ -558,24 +560,17 @@ void * HandleDelete(void *arg){
 	temp = ParseDelete(cmd, data_len, &key);
 	if (temp == 1){
 		p = SearchBPTree(T, key);
-		printf("search\n");
 		if (p->tag == 0){
 			printf("No Such id!\n>>");
 			return (void *) 0;
 		}
-		printf("remove\n");
-	//	map.key = key;
-	//	map.offset = p->pt->value[p->i];
-		
 		T = Remove(T, key);
-		printf("OK\n");
 		q = SearchBPTree(T, key);
 		if (q->tag == 0){
 //			delete_index[index] = map;
 	//		SaveDeleteIndex(index,map);
-	                printf("save");
 			SaveIndex(T);
-			printf(" <1> row effect.>>\n");
+			printf(" <1> row effect.\n>>");
 			return (void *)1;
 		}
 		printf("System Error!\n");
@@ -637,7 +632,10 @@ int main(int argc, const char* argv[]){
 			printf("Creat BPTree error!\n");
 			return 0;
 		}
-		map = SearchLast(T);
+		temp = get_file_size(INDEX_NAME);
+		if (temp > 0){
+			map = SearchLast(T);
+		}
 		TravelData(T);
 		printf("\n");
 	}
@@ -647,13 +645,13 @@ int main(int argc, const char* argv[]){
 			printf("Open data file error!\n");
 			return 0;
 		}
+		
 	}else{
 		if ((fd = open(TABLE_NAME, OPEN_MODE, FILE_MODE)) == -1){
 			printf("Create data file error!\n");
 			return 0;
 		}
 	}
-
 
         PrintMenu(); 
 	printf(">>");
@@ -724,5 +722,7 @@ int main(int argc, const char* argv[]){
 	close(fd);
 
 	Destroy(T);
+
 	return 0;
+
 }

@@ -263,7 +263,8 @@ static BPTree RemoveElement(int isKey, BPTree parent, BPTree position, int i, in
 		}
 		position->key[position->keynum - 1] = Unavailable;
 		position->value[position->keynum - 1] = Unavailable;
-		parent->key[i] = position->key[0];
+		if (parent != NULL)
+			parent->key[i] = position->key[0];
 		position->keynum--;
 	}else{
 		if(position->ptr[0] == NULL && i > 0){
@@ -463,22 +464,25 @@ static BPTree RecursiveRemove(BPTree T, KeyType key, int i, BPTree parent){
 	int j, needAdjust=False;
 	BPTree sibling,temp;
 	sibling = temp = NULL;
+	int flag = 0;
 
 	/* 查找分支 */
 	j = 0;
 	while (j < T->keynum && key >= T->key[j]){
-		if (key == T->key[j])
+		if (key == T->key[j]){
+			flag = 1;
 			break;
+		}
 		j++;
 	}
 	
-	if (j == 0){
+	if (j == 0 && !flag){
 		printf("%d not exit.\n", key);
 		return T;
 	}
 
-	if (T->ptr[0] == NULL){
-		if (key != T->key[j] || j == T->keynum){
+	if (T->ptr[0] == NULL && !flag){
+		if (j == T->keynum){
 			printf("%d not exit\n", key);
 			return T;
 		}

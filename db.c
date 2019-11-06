@@ -19,12 +19,8 @@ static off_t get_offset(int id, int fd, int type){
 
 // id 为文件的索引，fd为文件描述符
 extern int Update(int id, int fd, Data newData){
-	printf("id %d\n", id);
-
-	printf("%d %s %d %c\n", newData.age, newData.name, newData.std_no, newData.sex);
 	Data oldData = Select(id, fd);
 
-	printf("%d %s %d %c\n", oldData.age, oldData.name, oldData.std_no, oldData.sex);
 	if (newData.age < 0){
 		newData.age = oldData.age;
 	}
@@ -37,7 +33,6 @@ extern int Update(int id, int fd, Data newData){
 	if (newData.sex - 'a' == 0){
 		newData.sex = oldData.sex;
 	}
-	printf("%d %s %d %c\n", newData.age, newData.name, newData.std_no, newData.sex);
 
 	return InsertTable(newData, id, fd);
 
@@ -56,7 +51,6 @@ extern Data Select(int id, int fd){
 	p = &temp;
 
 	endPos = get_offset(id, fd, READ);
-//	printf("endPos %ld\n", endPos);
 
 	if (endPos == -1){
 		printf("get offset error.\n");
@@ -110,7 +104,6 @@ extern int InsertTable(Data record, int id, int fd){
 	name[NAME_LEN-1] = '\0';
 
 	endPos = get_offset(id, fd, WRITE);
-	printf("endPos %ld\n", endPos);
 	
 	if(endPos == -1){
 		printf("Find offset error!\n");
