@@ -32,6 +32,9 @@
 int fd;
 char str[MAX_STRING_LEN];
 BPTree T = NULL;
+
+pthread_mutex_t bmutex=PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t fmutex=PTHREAD_MUTEX_INITIALIZER;
 //Map deleteIndex[MAX_INDEX];
 
 // 操作提醒
@@ -296,13 +299,17 @@ void * HandleSelect(void *arg){
 	temp = ParseSelect(cmd, i, &key);
 
 	if (temp == 1){
+		pthread_mutex_lock(&bmutex);
 		p = SearchBPTree(T, key);
+		pthread_mutex_unlock(&bmutex);
 		if (p->tag == 0){
 			printf(" No Such id!\n>>");
 			return (void *)0;
 		}
 		map.offset = p->pt->value[p->i];
+		pthread_mutex_lock(&fmutex);
 		data = Select(map.offset, fd);
+		pthread_mutex_unlock(&fmutex);
 		printf("name	std_no		age	sex\n");
 		printf("%s	%d	%d	%c\n", data.name, data.std_no, data.age, data.sex);
 		printf(">>");
@@ -464,13 +471,16 @@ void * HandleUpdate(void *arg){
 	i = ParseInput(str, cmd);
 	temp = ParseUpdate(cmd, i, &newData, &key);
 	if (temp == 1){
+		pthread_mutex_lock(&bmutex);
 		p = SearchBPTree(T, key);
+		pthread_mutex_unlock(&bmutex);
 		if (p->tag == 0){
 			printf("No such id\n>>");
 			return (void *)0;
 		}
-		
+		pthread_mutex_lock(&fmutex);
 		i = Update(p->pt->value[p->i], fd, newData);
+		pthread_mutex_unlock(&fmutex);
 		if (i == SUCCESS){
 			printf(" (1) row effect.\n>>");
 			return (void *)1;
@@ -559,13 +569,17 @@ void * HandleDelete(void *arg){
 	data_len = ParseInput(str, cmd);
 	temp = ParseDelete(cmd, data_len, &key);
 	if (temp == 1){
+		pthread_mutex_lock(&bmutex);
 		p = SearchBPTree(T, key);
 		if (p->tag == 0){
 			printf("No Such id!\n>>");
+			pthread_mutex_unlock(&bmutex);
 			return (void *) 0;
 		}
 		T = Remove(T, key);
 		q = SearchBPTree(T, key);
+
+		pthread_mutex_unlock(&bmutex);
 		if (q->tag == 0){
 //			delete_index[index] = map;
 	//		SaveDeleteIndex(index,map);
@@ -636,8 +650,6 @@ int main(int argc, const char* argv[]){
 		if (temp > 0){
 			map = SearchLast(T);
 		}
-		TravelData(T);
-		printf("\n");
 	}
 	
 	if (access(TABLE_NAME, F_OK) == 0){
