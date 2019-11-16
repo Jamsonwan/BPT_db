@@ -202,6 +202,7 @@ void  HandleInsert(char *str, Map t_map, int connect_fd){
 			temp =send(connect_fd,  System_error, 20, 0);
 			if (temp < 0)
 				printf("send error!\n");
+			return;
 		}
 		i = 0;
 		i = InsertTable(newData, t_map.offset, fd);
@@ -499,9 +500,10 @@ void  HandleUpdate(char *str,  int connect_fd){
 		pthread_mutex_unlock(&bmutex);
 		if (p->tag == 0){
 			printf("No such id\n>>");	
-			temp =send(connect_fd,  Syntax_error, 20, 0);
+			temp = send(connect_fd,  Syntax_error, 20, 0);
 			if (temp < 0)
 				printf("send error!\n");
+			return;
 		}
 		pthread_mutex_lock(&fmutex);
 		i = Update(p->pt->value[p->i], fd, newData);
@@ -609,6 +611,7 @@ void  HandleDelete(char *str, int connect_fd){
 			temp =send(connect_fd,  Syntax_error, 20, 0);
 			if (temp < 0)
 				printf("send error!\n");
+			return;
 		}
 		T = Remove(T, key);
 		q = SearchBPTree(T, key);		
@@ -623,6 +626,7 @@ void  HandleDelete(char *str, int connect_fd){
 			temp =send(connect_fd,  Syntax_error, 20, 0);
 			if (temp < 0)
 				printf("send error!\n");
+			return;
 		}
 
 		
@@ -641,7 +645,6 @@ void * pthread_work(void * arg){
 
         while((numbytes = recv(connect_fd, buff, MAX_STRING_LEN, 0)) > 0){
 		buff[numbytes] = '\0';	
-//		printf("Get Command: %s\n", buff);	
 		cmd = GetCommand(buff);
 
 		switch(cmd){
