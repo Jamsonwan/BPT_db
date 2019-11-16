@@ -120,24 +120,24 @@ int ParseInsert(char cmd[][MAX_STRING_LEN], int data_len, Data *p){
 	
 
 	if (data_len != 7){
-		printf("Syntax error!\n");
+//		printf("Syntax error!\n");
 		return 0;
 	}
 
 	if (strncmp(cmd[i++], "into", 4) != 0){
-		printf("Use into please!\n");
+//		printf("Use into please!\n");
 		return 0;
 	}
 	if (strncmp(cmd[i++], TABLE_NAME, 7) != 0){
-		printf("Use %s please!\n", TABLE_NAME);
+//		printf("Use %s please!\n", TABLE_NAME);
 		return 0;
 	}
 	if (strncmp(cmd[i], "values(", 7) != 0){
-		printf("Use values( please!\n");
+//		printf("Use values( please!\n");
 		return 0;
 	}
 	if (cmd[data_len - 1][3] != ')' && cmd[data_len - 1][4] != ';'){
-		printf("Use ); please!\n");
+//		printf("Use ); please!\n");
 		return 0;
 	}
 	else{
@@ -149,7 +149,7 @@ int ParseInsert(char cmd[][MAX_STRING_LEN], int data_len, Data *p){
 		i++;
 		k = strlen(cmd[i]);
 		if (k > 9){
-			printf("The lenght of name is too long!\n");
+//			printf("The lenght of name is too long!\n");
 			return 0;
 		}
 		k = 1; // skip '"'
@@ -163,7 +163,7 @@ int ParseInsert(char cmd[][MAX_STRING_LEN], int data_len, Data *p){
 		k = 0;
 		j = 0;
 		if ((strlen(cmd[i]) < 7) && (strlen(cmd[i]) > 14)){
-			printf("The length of std_no should be 7-13 !\n");
+//			printf("The length of std_no should be 7-13 !\n");
 			return 0;
 		}
 		while (cmd[i][k] != ','){
@@ -175,7 +175,7 @@ int ParseInsert(char cmd[][MAX_STRING_LEN], int data_len, Data *p){
 		i++;
 		sex = cmd[i][1];
 		if (sex != 'g' && sex != 'b'){
-			printf("The sex should be 'b' or 'g'.\n");
+//			printf("The sex should be 'b' or 'g'.\n");
 			return 0;
 		}
 	}
@@ -207,7 +207,7 @@ void  HandleInsert(char *str, Map t_map, int connect_fd){
 		i = 0;
 		i = InsertTable(newData, t_map.offset, fd);
 		if (i == SUCCESS){
-			printf(" (1) row effect.\n>>");
+//			printf(" <1> row effect.\n>>");
 			temp =send(connect_fd,  Success_msg, 20, 0);
 			if (temp < 0)
 				printf("send error!\n");
@@ -366,15 +366,15 @@ int ParseUpdate(char cmd[][MAX_STRING_LEN], int data_len, Data *p, int *id){
 	name[0] = '\0';
 
 	if (data_len < 6 || data_len > 11){
-		printf("Syntax error!\n");
+//		printf("Syntax error!\n");
 		return 0;
 	}
 	if (strncmp(cmd[i++], TABLE_NAME, strlen(TABLE_NAME)) != 0){
-		printf("Syntax error!\n");
+//		printf("Syntax error!\n");
 		return 0;
 	}
 	if (strncmp(cmd[i++], "set", 3) != 0){
-		printf("Syntax error!\n");
+//		printf("Syntax error!\n");
 		return 0;
 	}
 	while (i < data_len){
@@ -428,13 +428,13 @@ int ParseUpdate(char cmd[][MAX_STRING_LEN], int data_len, Data *p, int *id){
 	}
 
 	if (strncmp(cmd[i++], "where", 5) != 0){
-		printf("Syntax error! Loss 'where'!\n");
+//		printf("Syntax error! Loss 'where'!\n");
 		return 0;
 	}
 
 	if (contain_char(cmd[i], '=')){
 		if (cmd[i][0] != 'i' && cmd[i][1] != 'd'){
-			printf("Use 'id=' please! Other function will implement in future!\n");
+//			printf("Use 'id=' please! Other function will implement in future!\n");
 			return 0;
 		}
 		k = 3; // skip '='
@@ -447,17 +447,17 @@ int ParseUpdate(char cmd[][MAX_STRING_LEN], int data_len, Data *p, int *id){
 		*id = atoi(temp);
 
 		if (cmd[i][k] != ';'){
-			printf("Syntax error! Loss ';'\n");
+//			printf("Syntax error! Loss ';'\n");
 			return 0;
 		}
 	}else{
 	       	if(strncmp(cmd[i++], "id", 2) != 0){
-			printf("Use 'id' please! Other function will implement in future!\n");
+//			printf("Use 'id' please! Other function will implement in future!\n");
 			return 0;
 		}
 
 		if (cmd[i][0] != '='){
-			printf("Syntax error!\n");
+//			printf("Syntax error!\n");
 		 	return 0;
 		}
 		i++;
@@ -470,7 +470,7 @@ int ParseUpdate(char cmd[][MAX_STRING_LEN], int data_len, Data *p, int *id){
 		*id = atoi(temp);
 
 		if (cmd[i][k] != ';'){
-			printf("Syntax error! Loss ';'\n");
+//			printf("Syntax error! Loss ';'\n");
 			return 0;
 		}	        
 	}
@@ -499,7 +499,7 @@ void  HandleUpdate(char *str,  int connect_fd){
 		p = SearchBPTree(T, key);
 		pthread_mutex_unlock(&bmutex);
 		if (p->tag == 0){
-			printf("No such id\n>>");	
+//			printf("No such id\n>>");	
 			temp = send(connect_fd,  Syntax_error, 20, 0);
 			if (temp < 0)
 				printf("send error!\n");
@@ -509,7 +509,7 @@ void  HandleUpdate(char *str,  int connect_fd){
 		i = Update(p->pt->value[p->i], fd, newData);
 		pthread_mutex_unlock(&fmutex);
 		if (i == SUCCESS){
-			printf(" (1) row effect.\n>>");
+//			printf("<1> row effect.\n>>");
 			temp =send(connect_fd,  Success_msg, 20, 0);
 			if (temp < 0)
 				printf("send error!\n");
@@ -531,30 +531,30 @@ int ParseDelete(char cmd[][MAX_STRING_LEN], int data_len, KeyType *key){
 	char temp[MAX_STRING_LEN];
 
 	if (data_len < 6){
-		printf("Syntax error!\n");
+//		printf("Syntax error!\n");
 		return 0;
 	}
 	i = 1;
 
 	if (cmd[i++][0] != '*'){
-		printf("Use 'delete *' please! Other function will implement in future|\n");
+//		printf("Use 'delete *' please! Other function will implement in future|\n");
 		return 0;
 	}
 	if (strncmp(cmd[i++], "from", 4) != 0){
-		printf("Syntax error! Loss 'from';\n");
+//		printf("Syntax error! Loss 'from';\n");
 		return 0;
 	}
 	if (strncmp(cmd[i++], TABLE_NAME, 7) != 0){
-		printf("Use %s please! Other function will implement in future!\n", TABLE_NAME);
+//		printf("Use %s please! Other function will implement in future!\n", TABLE_NAME);
 		return 0;
 	}
 	if (strncmp(cmd[i++], "where", 5) != 0){
-		printf("Syntax error! Loss 'where';\n");
+//		printf("Syntax error! Loss 'where';\n");
 		return 0;
 	}
 	if (contain_char(cmd[i], '=')){
 		if (cmd[i][0] != 'i' && cmd[i][1] != 'd'){
-			printf("Use 'where id= ' please, other function will implement in future.\n");
+//			printf("Use 'where id= ' please, other function will implement in future.\n");
 			return 0;
 		}
 		k = 3; // skip '='
@@ -565,16 +565,16 @@ int ParseDelete(char cmd[][MAX_STRING_LEN], int data_len, KeyType *key){
 		temp[j] = '\0';
 		*key = atoi(temp);
 		if (cmd[i][k] != ';'){
-			printf("Syntax error, loss ';'.\n");
+//			printf("Syntax error, loss ';'.\n");
 			return 0;
 		}
 	}else{
 		if (strncmp(cmd[i++], "id", 2) != 0){
-			printf("Use 'id = ' please! Other function will implement in future.\n");
+//			printf("Use 'id = ' please! Other function will implement in future.\n");
 			return 0;
 		}
 		if (cmd[i++][0] != '='){
-			printf("Syntax error! Loss '='.;\n");
+//			printf("Syntax error! Loss '='.;\n");
 			return 0;
 		}
 		k = 0;
@@ -585,7 +585,7 @@ int ParseDelete(char cmd[][MAX_STRING_LEN], int data_len, KeyType *key){
 		temp[j] = '\0';
 		*key = atoi(temp);
 		if (cmd[i][k] != ';'){
-			printf("Syntax error! Loss ';'.\n");
+//			printf("Syntax error! Loss ';'.\n");
 			return 0;
 		}
 	}
@@ -606,7 +606,7 @@ void  HandleDelete(char *str, int connect_fd){
 		pthread_mutex_lock(&bmutex);
 		p = SearchBPTree(T, key);
 		if (p->tag == 0){
-			printf("No Such id!\n>>");
+//			printf("No Such id!\n>>");
 			pthread_mutex_unlock(&bmutex);
 			temp =send(connect_fd,  Syntax_error, 20, 0);
 			if (temp < 0)
